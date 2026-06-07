@@ -1,9 +1,9 @@
 import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
+
 
 def generate_launch_description():
 
@@ -12,7 +12,7 @@ def generate_launch_description():
     nav2_param_path = os.path.join(
         pkg_share,
         'config',
-        'nav2_params.yaml'
+        'nav2_params_safety.yaml'
     )
 
     map_file = os.path.join(
@@ -20,10 +20,6 @@ def generate_launch_description():
         'maps',
         '4floor.yaml'
     )
-
-    # =========================
-    # Map Server
-    # =========================
 
     map_server_node = Node(
         package='nav2_map_server',
@@ -38,10 +34,6 @@ def generate_launch_description():
         ]
     )
 
-    # =========================
-    # AMCL
-    # =========================
-
     amcl_node = Node(
         package='nav2_amcl',
         executable='amcl',
@@ -49,10 +41,6 @@ def generate_launch_description():
         output='screen',
         parameters=[nav2_param_path]
     )
-
-    # =========================
-    # Planner Server
-    # =========================
 
     planner_server_node = Node(
         package='nav2_planner',
@@ -62,21 +50,17 @@ def generate_launch_description():
         parameters=[nav2_param_path]
     )
 
-    # =========================
-    # Controller Server
-    # =========================
-
     controller_server_node = Node(
         package='nav2_controller',
         executable='controller_server',
         name='controller_server',
         output='screen',
-        parameters=[nav2_param_path]
+        parameters=[nav2_param_path],
+        remappings=[
+            ('/cmd_vel', '/cmd_vel_nav'),
+            ('cmd_vel', '/cmd_vel_nav')
+        ]
     )
-
-    # =========================
-    # BT Navigator
-    # =========================
 
     bt_navigator_node = Node(
         package='nav2_bt_navigator',
@@ -86,10 +70,6 @@ def generate_launch_description():
         parameters=[nav2_param_path]
     )
 
-    # =========================
-    # Behavior Server
-    # =========================
-
     behavior_server_node = Node(
         package='nav2_behaviors',
         executable='behavior_server',
@@ -98,10 +78,6 @@ def generate_launch_description():
         parameters=[nav2_param_path]
     )
 
-    # =========================
-    # Waypoint Follower
-    # =========================
-
     waypoint_follower_node = Node(
         package='nav2_waypoint_follower',
         executable='waypoint_follower',
@@ -109,10 +85,6 @@ def generate_launch_description():
         output='screen',
         parameters=[nav2_param_path]
     )
-
-    # =========================
-    # Lifecycle Manager
-    # =========================
 
     lifecycle_manager_node = Node(
         package='nav2_lifecycle_manager',
@@ -136,9 +108,20 @@ def generate_launch_description():
         ]
     )
 
-    # =========================
-    # RViz
-    # =========================
+    safety_stop_node = Node(
+        package='scout_navigation',
+        executable='safety_stop_node',
+        name='safety_stop_node',
+        output='screen'
+    )
+    
+    recovery_behavior_node = Node(
+        package='scout_navigation',
+        executable='recovery_behavior_node',
+        name='recovery_behavior_node',
+        output='screen'
+        
+    )
 
     rviz_config = os.path.join(
         pkg_share,
@@ -163,5 +146,7 @@ def generate_launch_description():
         behavior_server_node,
         waypoint_follower_node,
         lifecycle_manager_node,
+        safety_stop_node,
+        recovery_behavior_node,
         rviz_node
     ])

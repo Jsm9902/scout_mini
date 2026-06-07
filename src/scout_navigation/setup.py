@@ -57,6 +57,9 @@ setup(
     tests_require=['pytest'],
 
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'safety_stop_node = scout_navigation.safety_stop_node:main',
+            'recovery_behavior_node = scout_navigation.recovery_behavior_node:main',
+        ],
     },
 )

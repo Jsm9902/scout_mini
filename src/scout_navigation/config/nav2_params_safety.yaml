@@ -51,7 +51,7 @@ planner_server:
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
-      use_astar: false
+      use_astar: true
       allow_unknown: true
 
 
@@ -94,12 +94,20 @@ controller_server:
       simulate_ahead_time: 1.0
 
       desired_linear_vel: 0.15
+
       use_collision_detection: true
       max_allowed_time_to_collision_up_to_carrot: 1.5
 
+      use_cost_regulated_linear_velocity_scaling: true
+      cost_scaling_dist: 0.6
+      cost_scaling_gain: 1.0
+      regulated_linear_scaling_min_radius: 0.9
+      regulated_linear_scaling_min_speed: 0.05
+
       lookahead_dist: 0.40
       min_lookahead_dist: 0.20
-      max_lookahead_dist: 0.7
+      max_lookahead_dist: 0.70
+      lookahead_time: 1.0
 
       transform_tolerance: 0.2
 
@@ -108,6 +116,7 @@ controller_server:
 
       allow_reversing: false
       use_velocity_scaled_lookahead_dist: false
+
 
 bt_navigator:
   ros__parameters:
@@ -134,8 +143,8 @@ local_costmap:
       robot_base_frame: base_link
       use_sim_time: false
 
-      update_frequency: 5.0
-      publish_frequency: 2.0
+      update_frequency: 8.0
+      publish_frequency: 4.0
 
       rolling_window: true
       width: 10
@@ -153,11 +162,12 @@ local_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
+        observation_persistence: 0.2
 
         scan:
           topic: /scan
           data_type: "LaserScan"
-          clearing: false
+          clearing: true
           marking: true
           obstacle_max_range: 4.0
           raytrace_max_range: 5.0
@@ -167,8 +177,8 @@ local_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.4
-        cost_scaling_factor: 8.0
+        inflation_radius: 0.40
+        cost_scaling_factor: 5.0
 
 
 global_costmap:
@@ -191,11 +201,12 @@ global_costmap:
 
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.4
-        cost_scaling_factor: 8.0
+        inflation_radius: 0.40
+        cost_scaling_factor: 5.0
 
 
 lifecycle_manager:
