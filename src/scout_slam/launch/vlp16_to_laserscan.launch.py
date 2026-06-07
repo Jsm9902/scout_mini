@@ -21,7 +21,7 @@ def generate_launch_description():
             'transform_tolerance': 0.1,
 
             # 높이 필터
-            'min_height': 0.05,
+            'min_height': 0.01,
             'max_height': 1.5,
 
             # 각도
