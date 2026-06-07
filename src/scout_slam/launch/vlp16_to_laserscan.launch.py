@@ -21,8 +21,8 @@ def generate_launch_description():
             'transform_tolerance': 0.1,
 
             # 높이 필터
-            'min_height': -0.2,
-            'max_height': 0.2,
+            'min_height': 0.05,
+            'max_height': 1.5,
 
             # 각도
             'angle_min': -3.14159,
@@ -30,10 +30,10 @@ def generate_launch_description():
             'angle_increment': 0.0174,
 
             # 성능 핵심
-            'scan_time': 0.2,
+            'scan_time': 0.1,
 
             # 거리
-            'range_min': 0.3,
+            'range_min': 0.05,
             'range_max': 20.0,
 
             'use_inf': True,
