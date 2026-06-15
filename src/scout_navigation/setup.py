@@ -61,6 +61,8 @@ setup(
             'safety_stop_node = scout_navigation.safety_stop_node:main',
             'recovery_behavior_node = scout_navigation.recovery_behavior_node:main',
             'multi_goal_mission_node = scout_navigation.multi_goal_mission_node:main',
+            'auto_patrol_node = scout_navigation.auto_patrol_node:main',
+            'battery_return_node = scout_navigation.battery_return_node:main',
         ],
     },
 )
