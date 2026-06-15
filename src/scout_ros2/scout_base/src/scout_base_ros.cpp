@@ -18,7 +18,7 @@ ScoutBaseRos::ScoutBaseRos(std::string node_name)
   this->declare_parameter("port_name", rclcpp::ParameterValue("can0"));
 
   this->declare_parameter("odom_frame", rclcpp::ParameterValue("odom"));
-  this->declare_parameter("base_frame", rclcpp::ParameterValue("base_link"));
+  this->declare_parameter("base_frame", rclcpp::ParameterValue("base_footprint"));
   this->declare_parameter("odom_topic_name", rclcpp::ParameterValue("odom"));
 
   this->declare_parameter("is_scout_mini", rclcpp::ParameterValue(false));
@@ -34,7 +34,7 @@ void ScoutBaseRos::LoadParameters() {
   this->get_parameter_or<std::string>("port_name", port_name_, "can0");
 
   this->get_parameter_or<std::string>("odom_frame", odom_frame_, "odom");
-  this->get_parameter_or<std::string>("base_frame", base_frame_, "base_link");
+  this->get_parameter_or<std::string>("base_frame", base_frame_, "base_footprint");
   this->get_parameter_or<std::string>("odom_topic_name", odom_topic_name_,
                                       "odom");
 

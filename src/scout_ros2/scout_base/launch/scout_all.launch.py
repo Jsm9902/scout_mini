@@ -36,7 +36,7 @@ def generate_launch_description():
 
     base_link_frame_arg = DeclareLaunchArgument(
         'base_frame',
-        default_value='base_link',
+        default_value='base_footprint',
         description='Base frame id'
     )
 
@@ -99,6 +99,20 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'robot_description': robot_description,
+            'use_sim_time': False
+        }]
+    )
+    
+    # =========================
+    # Joint State Publisher
+    # =========================
+
+    joint_state_publisher_node = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        output='screen',
+        parameters=[{
             'use_sim_time': False
         }]
     )
@@ -212,6 +226,7 @@ def generate_launch_description():
         sim_control_rate_arg,
 
         robot_state_publisher_node,
+        joint_state_publisher_node,
 
         velodyne_static_tf,
 
