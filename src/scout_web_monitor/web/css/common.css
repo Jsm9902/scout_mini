@@ -1,0 +1,235 @@
+body { margin: 0; font-family: Arial, sans-serif; background: #f3f5f7; }
+
+        header {
+            height: 90px; background: #0f2238; color: white;
+            position: relative; display: flex; align-items: center; justify-content: center;
+        }
+
+        header h1 { font-size: 32px; margin: 0; }
+
+        .connection-box {
+            position: absolute; left: 28px; bottom: 20px;
+            display: flex; align-items: center; font-size: 18px;
+        }
+
+        .status-dot {
+            width: 15px; height: 15px; border-radius: 50%;
+            background: red; margin-right: 10px;
+        }
+
+        .main-layout {
+            display: grid; grid-template-columns: 31% 69%;
+            gap: 10px; padding: 12px; align-items: stretch;
+        }
+
+        .left-panel { display: flex; flex-direction: column; gap: 10px; }
+
+        .card {
+            background: white; border: 1px solid #d0d7de;
+            border-radius: 6px; padding: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .card h2 { margin: 0 0 12px 0; font-size: 20px; }
+
+        .camera-img {
+            width: 100%; height: 360px; object-fit: contain;
+            background: black; border-radius: 4px;
+        }
+
+        .battery-card { padding: 8px 14px; }
+
+        .battery-header {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .battery-header h2 { margin: 0; font-size: 18px; }
+
+        .battery-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .battery-icon {
+            width: 38px;
+            height: 17px;
+            border: 2px solid #555;
+            border-radius: 3px;
+            display: flex;
+            padding: 2px;
+            position: relative;
+        }
+
+        .battery-icon::after {
+            content: "";
+            position: absolute;
+            right: -6px;
+            top: 5px;
+            width: 4px;
+            height: 9px;
+            background: #555;
+            border-radius: 1px;
+        }
+
+        .battery-cell {
+            flex: 1;
+            margin: 1px;
+            background: #d9d9d9;
+            border-radius: 1px;
+        }
+
+        .battery-value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-left: 6px;
+        }
+
+        .battery-good { color: #22a447; }
+        .battery-warn { color: #f59e0b; }
+        .battery-low { color: #dc2626; }
+
+        .control-header {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        select { font-size: 14px; padding: 5px; }
+
+        .keypad {
+            display: grid; grid-template-columns: repeat(3, 88px);
+            grid-template-rows: repeat(3, 52px);
+            gap: 10px; justify-content: center; margin-top: 12px;
+        }
+
+        .keypad button {
+            font-size: 31px; font-weight: bold; color: #0f2238;
+            background: #f8fafc; border: 1px solid #cfd8e3;
+            border-radius: 6px; cursor: pointer;
+        }
+
+        .keypad button:disabled {
+            background: #d8d8d8; color: #999; cursor: not-allowed;
+        }
+
+        .stop-btn { color: red !important; font-size: 17px !important; font-weight: bold; }
+
+        .map-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 90px;
+            margin-bottom: 10px;
+        }
+
+        .map-left-area { flex: 1; }
+
+        .map-left-area h2 { margin: 0 0 10px 0; }
+
+        .map-tools {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+
+        .map-tools button,
+        .waypoint-buttons button {
+            height: 34px; padding: 0 12px; font-size: 14px;
+            border: 1px solid #cfd8e3; background: #f8fafc;
+            border-radius: 5px; cursor: pointer; color: #0f2238; font-weight: bold;
+        }
+
+        .map-tools button.active,
+        .waypoint-buttons button.active {
+            background: #0f2238; color: white;
+        }
+
+        .home-btn {
+            border-color: #22a447 !important;
+            color: #166534 !important;
+        }
+
+        .home-btn.active {
+            background: #22a447 !important;
+            color: white !important;
+        }
+
+        .return-btn {
+            background: #ecfdf5 !important;
+            border-color: #22a447 !important;
+            color: #166534 !important;
+        }
+
+        .lidar-btn {
+            border-color: #dc2626 !important;
+            color: #991b1b !important;
+        }
+
+        .lidar-btn.active {
+            background: #dc2626 !important;
+            color: white !important;
+        }
+
+        .waypoint-top-panel { min-width: 360px; }
+
+        .waypoint-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .waypoint-title-row h2 { margin: 0; }
+
+        .waypoint-info {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 22px;
+        }
+
+        .waypoint-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .robot-state-grid {
+            display: grid; grid-template-columns: 1fr 1px 1fr;
+            gap: 18px; align-items: start; padding: 0 16px;
+        }
+
+        .divider { background: #d0d7de; height: 75px; }
+
+        .state-title { color: #0057b8; font-size: 17px; margin-bottom: 10px; }
+
+        .state-line { font-size: 16px; margin: 8px 0; }
+
+        .goal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 18px;
+            font-size: 15px;
+        }
+
+        .status-value { font-weight: bold; color: #0f2238; }
+
+        .status-idle { color: #374151; }
+        .status-moving { color: #2563eb; }
+        .status-arrived { color: #16a34a; }
+        .status-canceled { color: #dc2626; }
+        .status-waypoint { color: #9333ea; }
+        .status-warning { color: #f59e0b; }
+        .status-home { color: #16a34a; }
+
+        .map-card {
+            height: auto; display: flex; flex-direction: column;
+        }
+
+        #mapContainer {
+            width: 100%; height: calc(100% - 104px); min-height: 750px;
+            overflow: hidden; border: 1px solid #b8c2cc;
+            background: #ddd; cursor: grab;
+        }
+
+        #mapContainer:active { cursor: grabbing; }
+
+        #mapCanvas { width: 100%; height: 100%; display: block; }

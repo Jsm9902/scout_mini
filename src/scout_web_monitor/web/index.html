@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Scout Mini WEB Monitor</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/ros.js"></script>
+
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+
+<header>
+    <h1>부산외국어대학교 자율주행로봇 관제 시스템</h1>
+
+    <div class="system-status-bar">
+        <div class="status-item">
+            <span id="rosStatusDot" class="status-dot disconnected"></span>
+            <span id="rosStatusText">ROS Disconnected</span>
+        </div>
+
+        <div class="status-item">
+            <span id="robotStatusDot" class="status-dot disconnected"></span>
+            <span id="robotStatusText">Robot Unknown</span>
+        </div>
+
+        <div class="status-item">
+            <span id="websocketStatusDot" class="status-dot disconnected"></span>
+            <span id="websocketStatusText">WebSocket Disconnected</span>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="intro-box">
+        <div class="intro-label">SCOUT MINI WEB MONITOR</div>
+        <h2>Operation Mode Select</h2>
+        <p>자율주행, 지도 생성, 센서 모니터링 기능을 웹 기반으로 제어하고 확인합니다.</p>
+    </div>
+
+    <div class="mode-box">
+
+        <a class="mode-card nav-card" href="#" onclick="requestModeChange('navigation'); return false;">
+            <div class="mode-top">
+                <div class="mode-icon">🚗</div>
+
+                <div id="navModeBadge" class="ready-badge offline">
+                    <span></span>
+                    <span id="navModeText">OFFLINE</span>
+                </div>
+            </div>
+
+            <h2>자율주행 모드</h2>
+            <p>
+                완성된 지도를 기반으로 로봇을 운용하는 모드입니다.
+                목표 이동, 순찰, 복귀, 수동 조작 및 카메라 관제를 수행합니다.
+            </p>
+
+            <ul class="feature-list">
+                <li>Goal Navigation</li>
+                <li>Waypoint Patrol</li>
+                <li>Return Home</li>
+                <li>Manual Control</li>
+                <li>Camera Monitoring</li>
+            </ul>
+
+            <span class="tag nav-tag">NAV2 OPERATION</span>
+        </a>
+
+        <a class="mode-card slam-card" href="#" onclick="requestModeChange('slam'); return false;">
+            <div class="mode-top">
+                <div class="mode-icon">🗺️</div>
+
+                <div id="slamModeBadge" class="ready-badge offline">
+                    <span></span>
+                    <span id="slamModeText">OFFLINE</span>
+                </div>
+            </div>
+
+            <h2>지도생성 모드</h2>
+            <p>
+                새로운 환경에서 SLAM 기반 지도를 작성하는 모드입니다.
+                실시간 지도 확인, LiDAR Overlay, 지도 저장 기능을 수행합니다.
+            </p>
+
+            <ul class="feature-list">
+                <li>SLAM Mapping</li>
+                <li>LiDAR Overlay</li>
+                <li>Save Map</li>
+                <li>Serialize PoseGraph</li>
+                <li>Manual Control</li>
+            </ul>
+
+            <span class="tag slam-tag">SLAM MAPPING</span>
+        </a>
+
+    </div>
+</div>
+
+<footer>
+    <span>ROS2 Humble</span>
+    <span>Scout Mini</span>
+    <span>BUFS Autonomous Robot System</span>
+</footer>
+
+<script>
+    const rosStatusDot = document.getElementById("rosStatusDot");
+    const rosStatusText = document.getElementById("rosStatusText");
+
+    const robotStatusDot = document.getElementById("robotStatusDot");
+    const robotStatusText = document.getElementById("robotStatusText");
+
+    const websocketStatusDot = document.getElementById("websocketStatusDot");
+    const websocketStatusText = document.getElementById("websocketStatusText");
+
+    const navModeBadge = document.getElementById("navModeBadge");
+    const navModeText = document.getElementById("navModeText");
+
+    const slamModeBadge = document.getElementById("slamModeBadge");
+    const slamModeText = document.getElementById("slamModeText");
+
+    let webStatusTimer = null;
+    let modeCommandPublisher = null;
+    let pendingMode = null;
+    let movePageTimer = null;
+
+    function setDotConnected(dotElement, textElement, text) {
+        if (!dotElement || !textElement) {
+            return;
+        }
+
+        dotElement.classList.remove("disconnected");
+        dotElement.classList.add("connected");
+        textElement.innerHTML = text;
+    }
+
+    function setDotDisconnected(dotElement, textElement, text) {
+        if (!dotElement || !textElement) {
+            return;
+        }
+
+        dotElement.classList.remove("connected");
+        dotElement.classList.add("disconnected");
+        textElement.innerHTML = text;
+    }
+
+    function setModeBadge(badgeElement, textElement, state, text) {
+        if (!badgeElement || !textElement) {
+            return;
+        }
+
+        badgeElement.classList.remove(
+            "ready",
+            "waiting",
+            "offline",
+            "standby",
+            "starting",
+            "stopping",
+            "error"
+        );
+
+        badgeElement.classList.add(state.toLowerCase());
+        textElement.innerHTML = text;
+    }
+
+    function setAllSystemOffline() {
+        setDotDisconnected(rosStatusDot, rosStatusText, "ROS Disconnected");
+        setDotDisconnected(robotStatusDot, robotStatusText, "Robot Unknown");
+        setDotDisconnected(websocketStatusDot, websocketStatusText, "WebSocket Disconnected");
+
+        setModeBadge(navModeBadge, navModeText, "offline", "OFFLINE");
+        setModeBadge(slamModeBadge, slamModeText, "offline", "OFFLINE");
+    }
+
+    function normalizeModeState(state) {
+        if (!state) {
+            return "STANDBY";
+        }
+
+        return String(state).toUpperCase();
+    }
+
+    function applyModeBadgeFromStatus(status) {
+        const navigationState = normalizeModeState(status.navigation);
+        const slamState = normalizeModeState(status.slam);
+
+        setModeBadge(
+            navModeBadge,
+            navModeText,
+            navigationState.toLowerCase(),
+            navigationState
+        );
+
+        setModeBadge(
+            slamModeBadge,
+            slamModeText,
+            slamState.toLowerCase(),
+            slamState
+        );
+
+        if (pendingMode === "navigation" && navigationState === "READY") {
+            moveToModePage("nav.html");
+        }
+
+        if (pendingMode === "slam" && slamState === "READY") {
+            moveToModePage("slam.html");
+        }
+
+        if (pendingMode === "navigation" && navigationState === "ERROR") {
+            pendingMode = null;
+        }
+
+        if (pendingMode === "slam" && slamState === "ERROR") {
+            pendingMode = null;
+        }
+    }
+
+    function applyWebMonitorStatus(status) {
+        if (!status) {
+            return;
+        }
+
+        if (status.ros === "CONNECTED") {
+            setDotConnected(rosStatusDot, rosStatusText, "ROS Connected");
+        }
+        else {
+            setDotDisconnected(rosStatusDot, rosStatusText, "ROS Disconnected");
+        }
+
+        if (status.websocket === "CONNECTED") {
+            setDotConnected(websocketStatusDot, websocketStatusText, "WebSocket Connected");
+        }
+        else {
+            setDotDisconnected(websocketStatusDot, websocketStatusText, "WebSocket Disconnected");
+        }
+
+        if (status.robot === "ONLINE") {
+            setDotConnected(robotStatusDot, robotStatusText, "Robot Online");
+        }
+        else {
+            setDotDisconnected(robotStatusDot, robotStatusText, "Robot Offline");
+        }
+
+        applyModeBadgeFromStatus(status);
+    }
+
+    function subscribeWebMonitorStatus() {
+        const statusListener = new ROSLIB.Topic({
+            ros: ros,
+            name: "/web_monitor/status",
+            messageType: "std_msgs/msg/String"
+        });
+
+        statusListener.subscribe(function (message) {
+            try {
+                const status = JSON.parse(message.data);
+                applyWebMonitorStatus(status);
+
+                if (webStatusTimer) {
+                    clearTimeout(webStatusTimer);
+                }
+
+                webStatusTimer = setTimeout(function () {
+                    setDotConnected(rosStatusDot, rosStatusText, "ROS Connected");
+                    setDotConnected(websocketStatusDot, websocketStatusText, "WebSocket Connected");
+
+                    setDotDisconnected(robotStatusDot, robotStatusText, "Robot Unknown");
+                    setModeBadge(navModeBadge, navModeText, "standby", "STANDBY");
+                    setModeBadge(slamModeBadge, slamModeText, "standby", "STANDBY");
+                }, 3000);
+            }
+            catch (error) {
+                console.error("Failed to parse /web_monitor/status:", error);
+            }
+        });
+    }
+
+    function initModeCommandPublisher() {
+        modeCommandPublisher = new ROSLIB.Topic({
+            ros: ros,
+            name: "/web_monitor/mode_command",
+            messageType: "std_msgs/msg/String"
+        });
+    }
+
+    function requestModeChange(mode) {
+        if (!modeCommandPublisher) {
+            console.error("Mode command publisher is not ready.");
+            return;
+        }
+
+        pendingMode = mode;
+
+        if (movePageTimer) {
+            clearTimeout(movePageTimer);
+            movePageTimer = null;
+        }
+
+        if (mode === "navigation") {
+            setModeBadge(navModeBadge, navModeText, "starting", "STARTING");
+            setModeBadge(slamModeBadge, slamModeText, "standby", "STANDBY");
+        }
+        else if (mode === "slam") {
+            setModeBadge(navModeBadge, navModeText, "standby", "STANDBY");
+            setModeBadge(slamModeBadge, slamModeText, "starting", "STARTING");
+        }
+        else {
+            console.error("Unknown mode:", mode);
+            pendingMode = null;
+            return;
+        }
+
+        const msg = new ROSLIB.Message({
+            data: mode
+        });
+
+        modeCommandPublisher.publish(msg);
+    }
+
+    function moveToModePage(page) {
+        if (movePageTimer) {
+            return;
+        }
+
+        movePageTimer = setTimeout(function () {
+            window.location.href = page;
+        }, 700);
+    }
+
+    function onRosConnected() {
+        setDotConnected(rosStatusDot, rosStatusText, "ROS Connected");
+        setDotConnected(websocketStatusDot, websocketStatusText, "WebSocket Connected");
+
+        setModeBadge(navModeBadge, navModeText, "standby", "STANDBY");
+        setModeBadge(slamModeBadge, slamModeText, "standby", "STANDBY");
+
+        initModeCommandPublisher();
+        subscribeWebMonitorStatus();
+    }
+
+    function onRosError(error) {
+        setAllSystemOffline();
+        console.error(error);
+    }
+
+    function onRosClosed() {
+        setAllSystemOffline();
+    }
+</script>
+
+</body>
+</html>

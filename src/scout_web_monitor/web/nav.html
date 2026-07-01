@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title> 부산외대 자율주행 순찰로봇 웹관제 </title>
+    <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/ros.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/lidar.js"></script>
+    <script src="js/manual.js"></script>
+    <script src="js/robot.js"></script>
+    <script src="js/goal.js"></script>
+    <script src="js/waypoint.js"></script>
+    <script src="js/ui.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/navigation.css">
+
+    <style>
+        .mode-stop-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 34, 56, 0.58);
+            z-index: 9999;
+        }
+
+        .mode-stop-overlay.show {
+            display: flex;
+        }
+
+        .mode-stop-box {
+            width: 340px;
+            padding: 28px 30px;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+            text-align: center;
+            color: #0f2238;
+        }
+
+        .mode-stop-spinner {
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 16px auto;
+            border: 4px solid #e2e8f0;
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: modeStopSpin 0.9s linear infinite;
+        }
+
+        .mode-stop-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .mode-stop-text {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        @keyframes modeStopSpin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        body.page-closing {
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<header>
+    <div class="connection-box">
+        <div id="statusDot" class="status-dot"></div>
+        <span id="statusText">Disconnected</span>
+    </div>
+    <h1>부산외국어대학교 자율주행 순찰로봇 자율주행 모드</h1>
+</header>
+
+<div class="main-layout">
+
+    <div class="left-panel">
+
+        <div class="card battery-card">
+            <div class="battery-header">
+                <h2>Battery</h2>
+
+                <div class="battery-row">
+                    <div class="battery-icon">
+                        <div id="batteryCell1" class="battery-cell"></div>
+                        <div id="batteryCell2" class="battery-cell"></div>
+                        <div id="batteryCell3" class="battery-cell"></div>
+                    </div>
+
+                    <div id="batteryValue" class="battery-value">
+                        <span id="battery_percent">0</span>% (<span id="battery">0</span>V)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Camera View</h2>
+            <img id="cameraView" class="camera-img">
+        </div>
+
+        <div class="card">
+            <div class="control-header">
+                <h2>Manual Control</h2>
+                <div>
+                    Mode :
+                    <select id="modeSelect" onchange="changeMode()">
+                        <option value="manual">Manual Mode</option>
+                        <option value="auto">Auto Mode</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="keypad">
+                <button class="manual-btn" onmousedown="startMove(0.5, 0.8)" onmouseup="stopMove()" onmouseleave="stopMove()">↖</button>
+                <button class="manual-btn" onmousedown="startMove(0.5, 0.0)" onmouseup="stopMove()" onmouseleave="stopMove()">↑</button>
+                <button class="manual-btn" onmousedown="startMove(0.5, -0.8)" onmouseup="stopMove()" onmouseleave="stopMove()">↗</button>
+
+                <button class="manual-btn" onmousedown="startMove(0.0, 1.0)" onmouseup="stopMove()" onmouseleave="stopMove()">←</button>
+                <button class="manual-btn stop-btn" onclick="stopMove()">STOP</button>
+                <button class="manual-btn" onmousedown="startMove(0.0, -1.0)" onmouseup="stopMove()" onmouseleave="stopMove()">→</button>
+
+                <button class="manual-btn" onmousedown="startMove(-0.5, -0.8)" onmouseup="stopMove()" onmouseleave="stopMove()">↙</button>
+                <button class="manual-btn" onmousedown="startMove(-0.5, 0.0)" onmouseup="stopMove()" onmouseleave="stopMove()">↓</button>
+                <button class="manual-btn" onmousedown="startMove(-0.5, 0.8)" onmouseup="stopMove()" onmouseleave="stopMove()">↘</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Robot State</h2>
+
+            <div class="robot-state-grid">
+                <div>
+                    <div class="state-title">Position</div>
+                    <div class="state-line">X : <span id="odom_x">0</span></div>
+                    <div class="state-line">Y : <span id="odom_y">0</span></div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div>
+                    <div class="state-title">Velocity</div>
+                    <div class="state-line">Linear : <span id="linear_velocity">0</span> m/s</div>
+                    <div class="state-line">Angular : <span id="angular_velocity">0</span> rad/s</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Current Goal</h2>
+
+            <div class="goal-grid">
+                <div>X : <span id="goal_x">-</span></div>
+                <div>Status : <span id="goal_status" class="status-value status-idle">IDLE</span></div>
+                <div>Y : <span id="goal_y">-</span></div>
+                <div>Progress : <span id="waypoint_progress">-</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card map-card">
+
+        <div class="map-top">
+
+            <div class="map-left-area">
+                <h2>Map View</h2>
+
+                <div class="map-tools">
+                    <button id="initialPoseBtn" onclick="startInitialPoseMode()">Set Initial Pose</button>
+                    <button onclick="cancelInitialPoseMode()">Cancel Initial Pose</button>
+                    <button id="homePoseBtn" class="home-btn" onclick="startHomePoseMode()">Set Home Pose</button>
+                    <button class="return-btn" onclick="returnHome()">Return Home</button>
+                    <button onclick="cancelGoal()">Cancel Goal</button>
+                    <button id="lidarToggleBtn" class="lidar-btn" onclick="toggleLidarOverlay()">LiDAR OFF</button>
+                    <button class="back-btn" onclick="backToModeSelect()">Back</button>
+                </div>
+            </div>
+
+            <div class="waypoint-top-panel">
+                <div class="waypoint-title-row">
+                    <h2>Waypoint</h2>
+                </div>
+
+                <div class="waypoint-info">
+                    <div>Local : <span id="local_waypoint_count">0</span></div>
+                    <div>Server : <span id="server_waypoint_count">0</span></div>
+                    <div>Running : <span id="waypoint_running_text">-</span></div>
+                </div>
+
+                <div class="waypoint-buttons">
+                    <button id="waypointAddBtn" onclick="toggleWaypointAddMode()">Add Waypoint</button>
+                    <button onclick="startWaypointPatrol()">Start Patrol</button>
+                    <button onclick="clearWaypoints()">Clear</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="mapContainer">
+            <canvas id="mapCanvas"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<div id="modeStopOverlay" class="mode-stop-overlay">
+    <div class="mode-stop-box">
+        <div class="mode-stop-spinner"></div>
+        <div id="modeStopTitle" class="mode-stop-title">Stopping Mode...</div>
+        <div id="modeStopText" class="mode-stop-text">
+            현재 실행 중인 모드 프로세스를 종료하고 있습니다.
+        </div>
+    </div>
+</div>
+
+<script>
+
+    let currentMode = "manual";
+
+    const mapCanvas = document.getElementById("mapCanvas");
+    const mapCtx = mapCanvas.getContext("2d");
+    const mapContainer = document.getElementById("mapContainer");
+
+    let zoomScale = 1.0;
+    let panX = 0;
+    let panY = 0;
+
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    let mapImageCanvas = null;
+    let mapDisplayWidth = 800;
+    let mapDisplayHeight = 600;
+
+    let mapResolution = 0.05;
+    let mapOriginX = 0.0;
+    let mapOriginY = 0.0;
+    let mapWidth = 0;
+    let mapHeight = 0;
+
+    let robotPose = null;
+    let goalPose = null;
+    let homePose = null;
+    let globalPath = [];
+
+    let waypointAddMode = false;
+    let waypointList = [];
+    let waypointRunning = false;
+    let activeWaypointIndex = -1;
+
+    let initialPoseMode = false;
+    let initialPoseStep = 0;
+    let initialPoseTemp = null;
+
+    let homePoseMode = false;
+    let homePoseStep = 0;
+    let homePoseTemp = null;
+
+    let lidarOverlayEnabled = false;
+    let latestScan = null;
+
+    let mapDrawn = false;
+
+    const mapService = new ROSLIB.Service({
+        ros: ros,
+        name: '/map_server/map',
+        serviceType: 'nav_msgs/srv/GetMap'
+    });
+
+    const mapListener = new ROSLIB.Topic({
+        ros: ros,
+        name: '/map',
+        messageType: 'nav_msgs/msg/OccupancyGrid'
+    });
+
+    mapListener.subscribe(function (message) {
+        if (mapDrawn) {
+            return;
+        }
+
+        processMapMessage(message);
+    });
+
+    mapContainer.addEventListener('click', function (event) {
+
+        if (initialPoseMode) {
+            const point = screenToWorld(event.clientX, event.clientY);
+
+            if (initialPoseStep === 1) {
+                initialPoseTemp = {
+                    x: point.x,
+                    y: point.y
+                };
+
+                initialPoseStep = 2;
+                drawMap();
+                return;
+            }
+
+            if (initialPoseStep === 2) {
+                const dx = point.x - initialPoseTemp.x;
+                const dy = point.y - initialPoseTemp.y;
+
+                const yaw = Math.atan2(dy, dx);
+
+                initialPoseTemp.yaw = yaw;
+
+                publishInitialPose(
+                    initialPoseTemp.x,
+                    initialPoseTemp.y,
+                    yaw
+                );
+
+                initialPoseMode = false;
+                initialPoseStep = 0;
+
+                document.getElementById("initialPoseBtn").classList.remove("active");
+
+                drawMap();
+                return;
+            }
+        }
+
+        if (homePoseMode) {
+            const point = screenToWorld(event.clientX, event.clientY);
+
+            if (homePoseStep === 1) {
+                homePoseTemp = {
+                    x: point.x,
+                    y: point.y
+                };
+
+                homePoseStep = 2;
+                drawMap();
+                return;
+            }
+
+            if (homePoseStep === 2) {
+                const dx = point.x - homePoseTemp.x;
+                const dy = point.y - homePoseTemp.y;
+
+                const yaw = Math.atan2(dy, dx);
+
+                homePoseTemp.yaw = yaw;
+
+                homePose = {
+                    x: homePoseTemp.x,
+                    y: homePoseTemp.y,
+                    yaw: yaw
+                };
+
+                const homeMsg = makePoseStamped(
+                    homePose.x,
+                    homePose.y,
+                    homePose.yaw
+                );
+
+                setHomePublisher.publish(homeMsg);
+
+                homePoseMode = false;
+                homePoseStep = 0;
+                homePoseTemp = null;
+
+                document.getElementById("homePoseBtn").classList.remove("active");
+
+                setGoalStatus("HOME_SET");
+
+                drawMap();
+                return;
+            }
+        }
+
+        if (waypointAddMode) {
+            const point = screenToWorld(event.clientX, event.clientY);
+
+            let yaw = 0.0;
+
+            if (waypointList.length > 0) {
+                const prev = waypointList[waypointList.length - 1];
+
+                yaw = Math.atan2(
+                    point.y - prev.y,
+                    point.x - prev.x
+                );
+            }
+            else if (robotPose) {
+                yaw = Math.atan2(
+                    point.y - robotPose.y,
+                    point.x - robotPose.x
+                );
+            }
+
+            waypointList.push({
+                x: point.x,
+                y: point.y,
+                yaw: yaw
+            });
+
+            const waypointMsg = makePoseStamped(point.x, point.y, yaw);
+            waypointAddPublisher.publish(waypointMsg);
+
+            updateGoalCard();
+            drawMap();
+        }
+    });
+
+    mapContainer.addEventListener('dblclick', function (event) {
+        if (initialPoseMode || waypointAddMode || homePoseMode) {
+            return;
+        }
+
+        const goal = screenToWorld(event.clientX, event.clientY);
+
+        let yaw = 0.0;
+
+        if (robotPose) {
+            yaw = Math.atan2(
+                goal.y - robotPose.y,
+                goal.x - robotPose.x
+            );
+        }
+
+        goalPose = {
+            x: goal.x,
+            y: goal.y,
+            yaw: yaw
+        };
+
+        const goalMsg = makePoseStamped(goal.x, goal.y, yaw);
+
+        webGoalPublisher.publish(goalMsg);
+
+        setGoalStatus("SENDING_GOAL");
+
+        updateGoalCard();
+        drawMap();
+    });
+
+    mapContainer.addEventListener('wheel', function (event) {
+        event.preventDefault();
+
+        const rect = mapContainer.getBoundingClientRect();
+
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const beforeZoomX = (mouseX - panX) / zoomScale;
+        const beforeZoomY = (mouseY - panY) / zoomScale;
+
+        const zoomFactor = 1.1;
+
+        if (event.deltaY < 0) {
+            zoomScale *= zoomFactor;
+        }
+        else {
+            zoomScale /= zoomFactor;
+        }
+
+        zoomScale = Math.max(0.3, Math.min(zoomScale, 6.0));
+
+        panX = mouseX - beforeZoomX * zoomScale;
+        panY = mouseY - beforeZoomY * zoomScale;
+
+        drawMap();
+    });
+
+    mapContainer.addEventListener('mousedown', function (event) {
+        isDragging = true;
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+    });
+
+    mapContainer.addEventListener('mousemove', function (event) {
+        if (!isDragging) {
+            return;
+        }
+
+        const dx = event.clientX - lastMouseX;
+        const dy = event.clientY - lastMouseY;
+
+        panX += dx;
+        panY += dy;
+
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+
+        drawMap();
+    });
+
+    mapContainer.addEventListener('mouseup', function () {
+        isDragging = false;
+    });
+
+    mapContainer.addEventListener('mouseleave', function () {
+        isDragging = false;
+    });
+
+    window.addEventListener('resize', function () {
+        drawMap();
+    });
+
+    let backToModeSelectRequested = false;
+    let backToModeSelectTimer = null;
+
+    function setCameraStreamUrl() {
+        const cameraView = document.getElementById("cameraView");
+
+        if (!cameraView) {
+            return;
+        }
+
+        cameraView.src =
+            VIDEO_SERVER_URL +
+            "/stream?topic=/camera/camera/color/image_raw";
+    }
+
+    function showModeStopOverlay(title, text) {
+        const overlay = document.getElementById("modeStopOverlay");
+        const titleElement = document.getElementById("modeStopTitle");
+        const textElement = document.getElementById("modeStopText");
+
+        if (titleElement) {
+            titleElement.innerHTML = title;
+        }
+
+        if (textElement) {
+            textElement.innerHTML = text;
+        }
+
+        if (overlay) {
+            overlay.classList.add("show");
+        }
+    }
+
+    function moveToModeSelectPage() {
+        if (backToModeSelectTimer) {
+            return;
+        }
+
+        backToModeSelectTimer = setTimeout(function () {
+            document.body.classList.add("page-closing");
+
+            setTimeout(function () {
+                window.location.href = "index.html";
+            }, 250);
+        }, 300);
+    }
+
+    function subscribeBackModeStatus() {
+        const backStatusListener = new ROSLIB.Topic({
+            ros: ros,
+            name: "/web_monitor/status",
+            messageType: "std_msgs/msg/String"
+        });
+
+        backStatusListener.subscribe(function (message) {
+            if (!backToModeSelectRequested) {
+                return;
+            }
+
+            try {
+                const status = JSON.parse(message.data);
+                const navigationState = String(status.navigation || "STANDBY").toUpperCase();
+                const activeMode = String(status.active_mode || "none").toLowerCase();
+
+                if (
+                    navigationState === "STANDBY" ||
+                    navigationState === "OFFLINE" ||
+                    activeMode === "none"
+                ) {
+                    moveToModeSelectPage();
+                }
+            }
+            catch (error) {
+                console.error("Failed to parse /web_monitor/status while returning:", error);
+            }
+        });
+    }
+
+    function backToModeSelect() {
+        backToModeSelectRequested = true;
+
+        showModeStopOverlay(
+            "Stopping Navigation...",
+            "자율주행 모드를 종료한 뒤 모드 선택 화면으로 이동합니다."
+        );
+
+        const modeStopPublisher = new ROSLIB.Topic({
+            ros: ros,
+            name: "/web_monitor/mode_command",
+            messageType: "std_msgs/msg/String"
+        });
+
+        modeStopPublisher.publish(
+            new ROSLIB.Message({
+                data: "stop"
+            })
+        );
+
+        setTimeout(function () {
+            if (backToModeSelectRequested) {
+                moveToModeSelectPage();
+            }
+        }, 6000);
+    }
+
+    setCameraStreamUrl();
+    subscribeBackModeStatus();
+
+    updateGoalCard();
+    changeMode();
+
+</script>
+
+</body>
+</html>
