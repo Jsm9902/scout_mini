@@ -47,6 +47,20 @@ def generate_launch_description():
         ]
     )
 
+    slam_manager_node = Node(
+        package='scout_slam',
+        executable='slam_manager',
+        name='slam_manager_node',
+        output='screen'
+    )
+
+    web_status_node = Node(
+        package='scout_slam',
+        executable='web_status',
+        name='web_status_node',
+        output='screen'
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -58,5 +72,7 @@ def generate_launch_description():
     return LaunchDescription([
         load_map_arg,
         slam_toolbox_node,
+        slam_manager_node,
+        web_status_node,
         rviz_node
     ])
