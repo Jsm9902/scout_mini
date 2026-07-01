@@ -5,7 +5,6 @@ from rclpy.node import Node
 
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool
 
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
@@ -22,10 +21,8 @@ class SafetyStopNode(Node):
         self.forward_threshold = 0.01
 
         self.is_front_obstacle_detected = False
-        self.recovery_active = False
 
-        self.latest_nav_cmd = Twist()
-        self.latest_recovery_cmd = Twist()
+        self.latest_cmd = Twist()
 
         scan_qos = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
@@ -40,24 +37,10 @@ class SafetyStopNode(Node):
             scan_qos
         )
 
-        self.nav_cmd_sub = self.create_subscription(
+        self.cmd_sub = self.create_subscription(
             Twist,
-            '/cmd_vel_nav',
-            self.nav_cmd_callback,
-            10
-        )
-
-        self.recovery_cmd_sub = self.create_subscription(
-            Twist,
-            '/cmd_vel_recovery',
-            self.recovery_cmd_callback,
-            10
-        )
-
-        self.recovery_active_sub = self.create_subscription(
-            Bool,
-            '/recovery_active',
-            self.recovery_active_callback,
+            '/cmd_vel_selected',
+            self.cmd_callback,
             10
         )
 
@@ -73,14 +56,13 @@ class SafetyStopNode(Node):
         )
 
         self.get_logger().info(
-            'Safety Gate Active | '
+            'Safety Stop Active | '
             f'stop_distance={self.safe_distance}m | '
-            'input=/cmd_vel_nav + /cmd_vel_recovery | '
+            'input=/cmd_vel_selected | '
             'output=/cmd_vel'
         )
 
     def scan_callback(self, msg):
-
         center_index = len(msg.ranges) // 2
 
         start = max(0, center_index - self.half_width)
@@ -101,38 +83,28 @@ class SafetyStopNode(Node):
 
         front_min_distance = min(valid_ranges)
 
-        if front_min_distance < self.safe_distance:
-            self.is_front_obstacle_detected = True
-        else:
-            self.is_front_obstacle_detected = False
+        self.is_front_obstacle_detected = (
+            front_min_distance < self.safe_distance
+        )
 
-    def nav_cmd_callback(self, msg):
-        self.latest_nav_cmd = msg
-
-    def recovery_cmd_callback(self, msg):
-        self.latest_recovery_cmd = msg
-
-    def recovery_active_callback(self, msg):
-        self.recovery_active = msg.data
+    def cmd_callback(self, msg):
+        self.latest_cmd = msg
 
     def timer_callback(self):
-
-        if self.recovery_active:
-            self.cmd_pub.publish(self.latest_recovery_cmd)
-            return
-
-        is_moving_forward = self.latest_nav_cmd.linear.x > self.forward_threshold
+        is_moving_forward = (
+            self.latest_cmd.linear.x >
+            self.forward_threshold
+        )
 
         if self.is_front_obstacle_detected and is_moving_forward:
             stop_msg = Twist()
             self.cmd_pub.publish(stop_msg)
             return
 
-        self.cmd_pub.publish(self.latest_nav_cmd)
+        self.cmd_pub.publish(self.latest_cmd)
 
 
 def main(args=None):
-
     rclpy.init(args=args)
 
     node = SafetyStopNode()
@@ -140,7 +112,6 @@ def main(args=None):
     rclpy.spin(node)
 
     node.destroy_node()
-
     rclpy.shutdown()
 
 
