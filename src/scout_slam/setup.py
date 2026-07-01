@@ -30,6 +30,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'slam_manager = scout_slam.slam_manager_node:main',
+            'web_status = scout_slam.web_status_node:main',
         ],
     },
 )

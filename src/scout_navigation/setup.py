@@ -63,6 +63,8 @@ setup(
             'multi_goal_mission_node = scout_navigation.multi_goal_mission_node:main',
             'auto_patrol_node = scout_navigation.auto_patrol_node:main',
             'battery_return_node = scout_navigation.battery_return_node:main',
+            'web_goal_manager = scout_navigation.web_goal_manager:main',
+            'cmd_vel_mux_node = scout_navigation.cmd_vel_mux_node:main',
         ],
     },
 )
