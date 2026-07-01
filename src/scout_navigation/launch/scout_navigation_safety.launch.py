@@ -108,6 +108,13 @@ def generate_launch_description():
         ]
     )
 
+    cmd_vel_mux_node = Node(
+        package='scout_navigation',
+        executable='cmd_vel_mux_node',
+        name='cmd_vel_mux_node',
+        output='screen'
+    )
+
     safety_stop_node = Node(
         package='scout_navigation',
         executable='safety_stop_node',
@@ -138,6 +145,7 @@ def generate_launch_description():
         behavior_server_node,
         waypoint_follower_node,
         lifecycle_manager_node,
+        cmd_vel_mux_node,
         safety_stop_node,
         rviz_node
     ])
