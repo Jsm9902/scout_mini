@@ -1,52 +1,67 @@
 # 🚓 Scout Mini Autonomous Patrol Robot
 
-> **ROS2 Humble 기반 자율 순찰 로봇 시스템**
->
-> SLAM, Navigation2, Safety Stop, Industrial Safety, Autonomous Patrol, Battery Return, Frontier Exploration, Web Monitoring 기능을 통합한 자율주행 로봇 프로젝트입니다.
+<div align="center">
+
+### ROS2 Humble 기반 자율 순찰 로봇 시스템
+
+SLAM · Navigation2 · Industrial Safety · Frontier Exploration · Web Monitoring
+
+</div>
 
 ---
 
-# 📌 Project Overview
+# 📖 Overview
 
-본 프로젝트는 **AgileX Scout Mini**를 기반으로 구축한 ROS2 자율 순찰 로봇입니다.
+본 프로젝트는 **AgileX Scout Mini**를 기반으로 개발한 **ROS2 자율 순찰 로봇 시스템**입니다.
 
-LiDAR와 카메라를 이용하여 주변 환경을 인식하고, SLAM 기반 지도 생성, AMCL 기반 위치 추정, Navigation2 기반 자율주행을 수행합니다.
+LiDAR를 이용하여 실시간으로 지도를 생성하고(SLAM), 생성된 지도를 기반으로 AMCL 위치 추정과 Navigation2를 이용한 자율주행을 수행합니다.
 
-또한 산업 환경을 고려한 Safety Stop, Industrial Safety 기능과 함께 Waypoint 순찰, Battery Return, Frontier Exploration을 구현하였으며, Web 기반 원격 관제 시스템을 통해 실시간 모니터링과 원격 제어가 가능합니다.
+또한 산업 환경에서 사용할 수 있도록 **Safety Stop**, **Industrial Safety**, **자동 순찰**, **저전압 자동 복귀**, **Frontier Exploration**, **Web 기반 원격 관제 시스템**을 구현하였습니다.
 
 ---
 
-# ✨ Features
+# 🎯 Project Goals
 
-- ✅ ROS2 Humble
-- ✅ SLAM Toolbox
-- ✅ Navigation2
-- ✅ AMCL Localization
-- ✅ Waypoint Patrol
-- ✅ Multi Goal Mission
-- ✅ Safety Stop
-- ✅ Industrial Safety
-- ✅ Recovery Behavior
-- ✅ Low Battery Return
-- ✅ Frontier Exploration
-- ✅ Web Monitoring
-- ✅ ROSBridge Web Control
+- ROS2 기반 자율주행 시스템 구축
+- 실시간 SLAM 및 Navigation 구현
+- 산업 환경을 고려한 안전 시스템 구축
+- Web 기반 원격 관제 시스템 개발
+- 다양한 자율주행 기능을 하나의 플랫폼으로 통합
+
+---
+
+# ✨ Implemented Features
+
+| Feature | Status |
+|----------|:------:|
+| SLAM Toolbox | ✅ |
+| AMCL Localization | ✅ |
+| Navigation2 | ✅ |
+| Waypoint Navigation | ✅ |
+| Autonomous Patrol | ✅ |
+| Safety Stop | ✅ |
+| Industrial Safety | ✅ |
+| Low Battery Return | ✅ |
+| Frontier Exploration | ✅ |
+| Web Monitoring System | ✅ |
+| Remote Robot Control | ✅ |
+| ROSBridge Integration | ✅ |
 
 ---
 
 # 🖥 Hardware
 
-| Component | Model |
-|-----------|-------|
+| Component | Description |
+|------------|-------------|
 | Mobile Robot | AgileX Scout Mini |
 | LiDAR | Velodyne VLP-16 |
-| Camera | Intel RealSense |
+| Computer | Intel NUC |
 | OS | Ubuntu 22.04 |
 | ROS | ROS2 Humble |
 
 ---
 
-# 💻 Software
+# 💻 Software Stack
 
 - ROS2 Humble
 - Navigation2
@@ -54,7 +69,6 @@ LiDAR와 카메라를 이용하여 주변 환경을 인식하고, SLAM 기반 �
 - AMCL
 - RViz2
 - ROSBridge Suite
-- WebSocket
 - HTML
 - CSS
 - JavaScript
@@ -65,14 +79,37 @@ LiDAR와 카메라를 이용하여 주변 환경을 인식하고, SLAM 기반 �
 # 📂 Project Structure
 
 ```text
-src/
-├── scout_description      # Robot URDF
-├── scout_exploration      # Frontier Exploration
-├── scout_navigation       # Navigation / Safety / Patrol
-├── scout_ros2             # Scout Robot Driver
-├── scout_slam             # SLAM
-├── scout_web_monitor      # Web Monitoring
-└── ugv_sdk                # Scout SDK
+src
+├── scout_description
+│   └── Robot URDF
+│
+├── scout_ros2
+│   └── Scout Robot Driver
+│
+├── ugv_sdk
+│   └── Scout SDK
+│
+├── scout_slam
+│   ├── SLAM Toolbox
+│   └── Map Management
+│
+├── scout_navigation
+│   ├── Navigation2
+│   ├── AMCL
+│   ├── Safety Stop
+│   ├── Industrial Safety
+│   ├── Autonomous Patrol
+│   ├── Battery Return
+│   └── Web Goal Manager
+│
+├── scout_exploration
+│   └── Frontier Exploration
+│
+└── scout_web_monitor
+    ├── ROSBridge
+    ├── Web Server
+    ├── Navigation UI
+    └── SLAM UI
 ```
 
 ---
@@ -80,31 +117,29 @@ src/
 # 🏗 System Architecture
 
 ```text
-                  Velodyne LiDAR
-                         │
-                  Intel RealSense
-                         │
-                   Scout Mini Robot
-                         │
-                    ROS2 Humble
-                         │
- ┌──────────────────────────────────────────────┐
- │                                              │
- │        SLAM Toolbox / AMCL / Nav2            │
- │                                              │
- └──────────────────────────────────────────────┘
-                         │
-      ┌──────────────┬──────────────┬─────────────┐
-      │              │              │
- Safety Stop   Industrial Safety   Recovery
-      │              │              │
-      └──────────────┴──────────────┘
-                         │
-          Waypoint / Patrol / Frontier
-                         │
-                 ROSBridge WebSocket
-                         │
-                  Web Monitoring UI
+               Velodyne LiDAR
+                      │
+                Scout Mini Robot
+                      │
+                 ROS2 Humble
+                      │
+      ┌─────────────────────────────────┐
+      │                                 │
+      │    SLAM Toolbox / Navigation2   │
+      │                                 │
+      └─────────────────────────────────┘
+                      │
+      ┌───────────────┼─────────────────┐
+      │               │                 │
+ Safety Stop   Industrial Safety   Battery Return
+      │               │                 │
+      └───────────────┼─────────────────┘
+                      │
+      Autonomous Patrol / Frontier Exploration
+                      │
+                ROSBridge WebSocket
+                      │
+               Web Monitoring System
 ```
 
 ---
@@ -121,7 +156,15 @@ source install/setup.bash
 
 ---
 
-# 🚀 Launch
+# 🚀 Launch Guide
+
+## SLAM
+
+```bash
+ros2 launch scout_slam scout_slam_integrated.launch.py
+```
+
+---
 
 ## Navigation
 
@@ -147,26 +190,10 @@ ros2 launch scout_navigation scout_industrial_safety_integrated.launch.py
 
 ---
 
-## Auto Patrol
+## Autonomous Patrol
 
 ```bash
 ros2 launch scout_navigation scout_auto_patrol_integrated.launch.py
-```
-
----
-
-## Multi Goal Mission
-
-```bash
-ros2 launch scout_navigation scout_multi_goal_integrated.launch.py
-```
-
----
-
-## Recovery Behavior
-
-```bash
-ros2 launch scout_navigation scout_recovery_integrated.launch.py
 ```
 
 ---
@@ -187,14 +214,6 @@ ros2 launch scout_navigation scout_frontier_exploration_integrated.launch.py
 
 ---
 
-## SLAM
-
-```bash
-ros2 launch scout_slam scout_slam_integrated.launch.py
-```
-
----
-
 ## Web Navigation
 
 ```bash
@@ -211,17 +230,20 @@ ros2 launch scout_web_monitor web_slam.launch.py
 
 ---
 
-# 🌐 Web Monitoring
+# 🌐 Web Monitoring System
 
-The Web Monitoring System provides:
+Web 기반 원격 관제 시스템을 구현하여 별도의 ROS 환경 없이 브라우저에서 로봇을 모니터링하고 제어할 수 있습니다.
 
-- Real-time Map
-- Robot Pose
-- Goal Setting
+### 주요 기능
+
+- 실시간 지도 표시
+- Robot Pose 표시
+- Goal 설정
 - Manual Control
 - Camera Streaming
+- Robot Status
 - Battery Status
-- Robot Speed
+- Speed Monitoring
 - Connection Status
 - Navigation Mode
 - SLAM Mode
@@ -236,10 +258,8 @@ The Web Monitoring System provides:
 - AMCL
 - Safety Stop
 - Industrial Safety
-- Recovery Behavior
-- Auto Patrol
-- Multi Goal Mission
-- Battery Return
+- Autonomous Patrol
+- Low Battery Return
 - Web Goal Manager
 
 ---
@@ -249,14 +269,12 @@ The Web Monitoring System provides:
 - SLAM Toolbox
 - Map Save
 - Map Load
-- Online Mapping
 
 ---
 
 ## scout_exploration
 
 - Frontier Exploration
-- Automatic Exploration
 
 ---
 
@@ -266,30 +284,31 @@ The Web Monitoring System provides:
 - WebSocket
 - HTML / CSS / JavaScript
 - Robot Monitoring
-- Manual Control
+- Remote Control
 
 ---
 
 # 📈 Project Highlights
 
-- Autonomous Navigation using Navigation2
-- Real-time Mapping using SLAM Toolbox
-- Obstacle Detection using LiDAR
-- Industrial Safety Control
-- Automatic Waypoint Patrol
-- Automatic Battery Return
-- Frontier-based Autonomous Exploration
-- Web-based Robot Monitoring System
+- ROS2 기반 자율주행 시스템 구축
+- SLAM Toolbox를 이용한 실시간 지도 생성
+- Navigation2 기반 자율주행
+- 산업 환경을 고려한 Safety Stop 및 Industrial Safety 구현
+- Waypoint 기반 자율 순찰
+- 저전압 자동 복귀 기능
+- Frontier 기반 자동 탐사
+- Web 기반 원격 관제 시스템 개발
+- ROSBridge를 이용한 ROS2-Web 실시간 통신
 
 ---
 
-# 🔮 Future Work
+# 🔧 Future Improvements
 
-- YOLO Human Following
-- RTAB-Map 3D Mapping
-- AI-based Object Detection
-- Automatic Incident Detection
-- Multi-Robot Control
+- YOLO 기반 사람 추종
+- RTAB-Map 기반 3D Mapping
+- AI 객체 인식 및 상황 판단
+- 다중 로봇 관제 시스템
+- AI 기반 자율 순찰 고도화
 
 ---
 
@@ -297,11 +316,15 @@ The Web Monitoring System provides:
 
 **Jo Seongmin**
 
-ROS2 Autonomous Mobile Robot Developer
+Master of Artificial Intelligence Convergence
+
+**Tech Stack**
 
 - ROS2
 - Navigation2
-- SLAM
-- Web Monitoring
+- SLAM Toolbox
+- Python
+- HTML / CSS / JavaScript
 - Embedded System
 - Computer Vision
+- Autonomous Mobile Robot
